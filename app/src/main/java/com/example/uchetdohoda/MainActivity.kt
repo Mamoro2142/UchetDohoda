@@ -286,17 +286,16 @@ fun InputScreen(
     onSave: () -> Unit
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .horizontalScroll(rememberScrollState())
+    modifier = modifier
+        .fillMaxSize()
+        .padding(16.dp),
+    horizontalAlignment = Alignment.CenterHorizontally
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 560.dp)
     ) {
-        Column(
-            modifier = Modifier.widthIn(
-                min = 300.dp,
-                max = 600.dp
-            )
-        ) {
             Text(
                 text = "Введите количество",
                 style = MaterialTheme.typography.titleLarge
