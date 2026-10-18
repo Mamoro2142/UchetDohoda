@@ -167,97 +167,116 @@ fun IncomeApp() {
         q * p
     }
 
-    Scaffold(
-        topBar = {
-            Column {
-                Text(
-                    text = "Учёт дохода",
-                    modifier = Modifier.padding(
-                        start = 20.dp,
-                        top = 20.dp,
-                        bottom = 12.dp
-                    ),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
+    
+Scaffold(
+    modifier = Modifier.fillMaxSize(),
+    topBar = {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 1100.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Учёт дохода",
+                        modifier = Modifier.padding(
+                            start = 20.dp,
+                            top = 20.dp,
+                            bottom = 12.dp
+                        ),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                TabRow(selectedTabIndex = tab) {
-                    listOf("Ввод", "Вахта", "Тарифы")
-                        .forEachIndexed { index, title ->
-                            Tab(
-                                selected = tab == index,
-                                onClick = { tab = index },
-                                text = { Text(title) }
-                            )
-                        }
+                    TabRow(selectedTabIndex = tab) {
+                        listOf("Ввод", "Вахта", "Тарифы")
+                            .forEachIndexed { index, title ->
+                                Tab(
+                                    selected = tab == index,
+                                    onClick = { tab = index },
+                                    text = { Text(title) }
+                                )
+                            }
+                    }
                 }
             }
         }
-    ) { padding ->
-        when (tab) {
-            0 -> InputScreen(
-                modifier = Modifier.padding(padding),
-                inputs = inputs,
-                income = income,
-                onSave = {
-                    if (entries.size >= 30) {
-                        Toast.makeText(
-                            context,
-                            "Все 30 дней заполнены",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        val date = SimpleDateFormat(
-                            "dd.MM.yyyy",
-                            Locale.getDefault()
-                        ).format(Date())
+    }
+) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 1100.dp)
+                .fillMaxHeight()
+        ) {
+            when (tab) {
+                0 -> InputScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    inputs = inputs,
+                    income = income,
+                    onSave = {
+                        if (entries.size >= 30) {
+                            Toast.makeText(
+                                context,
+                                "Все 30 дней заполнены",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            val date = SimpleDateFormat(
+                                "dd.MM.yyyy",
+                                Locale.getDefault()
+                            ).format(Date())
 
-                        entries.add(
-                            DayEntry(
-                                date = date,
-                                values = quantities,
-                                income = income
+                            entries.add(
+                                DayEntry(date, quantities, income)
                             )
-                        )
+                            saveEntries()
 
-                        saveEntries()
+                            names.forEach { inputs[it] = "0" }
 
-                        names.forEach { name ->
-                            inputs[name] = "0"
+                            Toast.makeText(
+                                context,
+                                "Запись сохранена",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            tab = 1
                         }
+                    }
+                )
 
+                1 -> ShiftScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    entries = entries
+                )
+
+                2 -> RatesScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    rates = rates,
+                    onSave = {
+                        saveRates()
                         Toast.makeText(
                             context,
-                            "Запись сохранена",
+                            "Тарифы сохранены",
                             Toast.LENGTH_SHORT
                         ).show()
-
-                        tab = 1
                     }
-                }
-            )
-
-            1 -> ShiftScreen(
-                modifier = Modifier.padding(padding),
-                entries = entries
-            )
-
-            2 -> RatesScreen(
-                modifier = Modifier.padding(padding),
-                rates = rates,
-                onSave = {
-                    saveRates()
-
-                    Toast.makeText(
-                        context,
-                        "Тарифы сохранены",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            )
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun InputScreen(
