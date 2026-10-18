@@ -1,3 +1,4 @@
+
 package com.example.uchetdohoda
 
 import android.content.Context
@@ -8,8 +9,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -72,17 +73,15 @@ fun IncomeApp() {
         mutableStateMapOf<String, String>().apply {
             putAll(defaults)
 
-            val saved = prefs.getString("rates", null)
-
-            if (saved != null) {
-                try {
+            try {
+                val saved = prefs.getString("rates", null)
+                if (saved != null) {
                     val json = JSONObject(saved)
-
                     names.forEach { name ->
                         put(name, json.optString(name, "0"))
                     }
-                } catch (_: Exception) {
                 }
+            } catch (_: Exception) {
             }
         }
     }
@@ -138,11 +137,9 @@ fun IncomeApp() {
 
         entries.forEach { entry ->
             val obj = JSONObject()
-
             obj.put("date", entry.date)
             obj.put("values", JSONArray(entry.values))
             obj.put("income", entry.income)
-
             array.put(obj)
         }
 
@@ -167,25 +164,23 @@ fun IncomeApp() {
         q * p
     }
 
-    
-Scaffold(
-    modifier = Modifier.fillMaxSize(),
-    topBar = {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 1100.dp)
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Column {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 1100.dp)
+                ) {
                     Text(
                         text = "Учёт дохода",
                         modifier = Modifier.padding(
                             start = 20.dp,
-                            top = 20.dp,
+                            top = 16.dp,
                             bottom = 12.dp
                         ),
                         style = MaterialTheme.typography.headlineMedium,
@@ -205,97 +200,98 @@ Scaffold(
                 }
             }
         }
-    }
-) { padding ->
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding),
-        contentAlignment = Alignment.TopCenter
-    ) {
+    ) { padding ->
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 1100.dp)
-                .fillMaxHeight()
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            when (tab) {
-                0 -> InputScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    inputs = inputs,
-                    income = income,
-                    onSave = {
-                        if (entries.size >= 30) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 1100.dp)
+                    .fillMaxHeight()
+            ) {
+                when (tab) {
+                    0 -> InputScreen(
+                        inputs = inputs,
+                        income = income,
+                        onSave = {
+                            if (entries.size >= 30) {
+                                Toast.makeText(
+                                    context,
+                                    "Все 30 дней заполнены",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                val date = SimpleDateFormat(
+                                    "dd.MM.yyyy",
+                                    Locale.getDefault()
+                                ).format(Date())
+
+                                entries.add(
+                                    DayEntry(
+                                        date = date,
+                                        values = quantities,
+                                        income = income
+                                    )
+                                )
+
+                                saveEntries()
+
+                                names.forEach { name ->
+                                    inputs[name] = "0"
+                                }
+
+                                Toast.makeText(
+                                    context,
+                                    "Запись сохранена",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                tab = 1
+                            }
+                        }
+                    )
+
+                    1 -> ShiftScreen(entries = entries)
+
+                    2 -> RatesScreen(
+                        rates = rates,
+                        onSave = {
+                            saveRates()
                             Toast.makeText(
                                 context,
-                                "Все 30 дней заполнены",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            val date = SimpleDateFormat(
-                                "dd.MM.yyyy",
-                                Locale.getDefault()
-                            ).format(Date())
-
-                            entries.add(
-                                DayEntry(date, quantities, income)
-                            )
-                            saveEntries()
-
-                            names.forEach { inputs[it] = "0" }
-
-                            Toast.makeText(
-                                context,
-                                "Запись сохранена",
+                                "Тарифы сохранены",
                                 Toast.LENGTH_SHORT
                             ).show()
-
-                            tab = 1
                         }
-                    }
-                )
-
-                1 -> ShiftScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    entries = entries
-                )
-
-                2 -> RatesScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    rates = rates,
-                    onSave = {
-                        saveRates()
-                        Toast.makeText(
-                            context,
-                            "Тарифы сохранены",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
+                    )
+                }
             }
         }
     }
 }
 
-
 @Composable
 fun InputScreen(
-    modifier: Modifier = Modifier,
     inputs: MutableMap<String, String>,
     income: Double,
     onSave: () -> Unit
 ) {
     Column(
-    modifier = modifier
-        .fillMaxSize()
-        .padding(16.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
-) {
-    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 560.dp)
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 560.dp)
+        ) {
             Text(
                 text = "Введите количество",
                 style = MaterialTheme.typography.titleLarge
@@ -335,46 +331,50 @@ fun InputScreen(
 
 @Composable
 fun RatesScreen(
-    modifier: Modifier = Modifier,
     rates: MutableMap<String, String>,
     onSave: () -> Unit
 ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Стоимость за единицу",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        names.forEach { name ->
-            NumberField(
-                label = "$name — тариф",
-                value = rates[name] ?: "0",
-                onValueChange = { rates[name] = it }
-            )
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-            onClick = onSave,
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 560.dp)
         ) {
-            Text("Сохранить тарифы")
+            Text(
+                text = "Стоимость за единицу",
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            names.forEach { name ->
+                NumberField(
+                    label = "$name — тариф",
+                    value = rates[name] ?: "0",
+                    onValueChange = { rates[name] = it }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = onSave,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Сохранить тарифы")
+            }
         }
     }
 }
 
 @Composable
-fun ShiftScreen(
-    modifier: Modifier = Modifier,
-    entries: List<DayEntry>
-) {
+fun ShiftScreen(entries: List<DayEntry>) {
     val totals = (0 until 5).map { column ->
         entries.sumOf {
             it.values.getOrElse(column) { 0.0 }
@@ -384,16 +384,18 @@ fun ShiftScreen(
     val totalIncome = entries.sumOf { it.income }
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Вахта: ${entries.size} из 30 дней",
             style = MaterialTheme.typography.titleLarge
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         Row(
             modifier = Modifier.horizontalScroll(
@@ -403,13 +405,8 @@ fun ShiftScreen(
             Column {
                 Row {
                     listOf(
-                        "День",
-                        "Пики",
-                        "Вес",
-                        "Объём",
-                        "Боксы",
-                        "Часы",
-                        "Доход"
+                        "День", "Пики", "Вес", "Объём",
+                        "Боксы", "Часы", "Доход"
                     ).forEach { title ->
                         TableCell(title, header = true)
                     }
@@ -417,36 +414,30 @@ fun ShiftScreen(
 
                 HorizontalDivider()
 
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 430.dp)
-                ) {
-                    items((0 until 30).toList()) { index ->
-                        val entry = entries.getOrNull(index)
+                (0 until 30).forEach { index ->
+                    val entry = entries.getOrNull(index)
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            TableCell("${index + 1}")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TableCell("${index + 1}")
 
-                            if (entry != null) {
-                                entry.values.forEach { value ->
-                                    TableCell(number(value))
-                                }
-                            } else {
-                                repeat(5) {
-                                    TableCell("—")
-                                }
+                        if (entry != null) {
+                            entry.values.forEach { value ->
+                                TableCell(number(value))
                             }
-
-                            TableCell(
-                                entry?.let {
-                                    money(it.income)
-                                } ?: "—"
-                            )
+                        } else {
+                            repeat(5) {
+                                TableCell("—")
+                            }
                         }
 
-                        HorizontalDivider()
+                        TableCell(
+                            entry?.let { money(it.income) } ?: "—"
+                        )
                     }
+
+                    HorizontalDivider()
                 }
 
                 Row {
@@ -464,7 +455,7 @@ fun ShiftScreen(
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         Text(
             text = "Суммарный доход: ${money(totalIncome)}",
